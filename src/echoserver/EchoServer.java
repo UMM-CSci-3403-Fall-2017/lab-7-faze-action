@@ -2,12 +2,16 @@ package echoserver;
 
 import java.net.*;
 import java.io.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class EchoServer {
 
     public static void main(String[] args){
         try {
             ServerSocket sock = new ServerSocket(6013);
+            // Limit to 32 threads (Multivac has 8 cores, 4 threads per core seems reasonable)
+			ExecutorService pool = Executors.newFixedThreadPool(32);
 
             while(true){
                 System.out.println("Ready for next request!");
@@ -17,7 +21,7 @@ public class EchoServer {
 				// It's important that we accept and then pass the client socket before creating the thread so there
 				// aren't infinite threads being created.
                 EchoThread echoThread = new EchoThread(client);
-                echoThread.start();
+                pool.execute(echoThread);
             }
         } catch (IOException ioe){
             System.err.println(ioe);

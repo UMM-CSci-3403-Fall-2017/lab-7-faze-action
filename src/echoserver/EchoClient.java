@@ -1,28 +1,35 @@
 package echoserver;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
+import java.net.*;
+import java.io.*;
 
 public class EchoClient {
-	public static final int PORT_NUMBER = 6013;
 
-	public static void main(String[] args) throws IOException {
-		EchoClient client = new EchoClient();
-		client.start();
-	}
+    public static void main(String[] args){
+        try {
+            Socket socket = new Socket("127.0.0.1", 6013);
+            //change ip address to any ip or url
 
-	private void start() throws IOException {
-		Socket socket = new Socket("localhost", PORT_NUMBER);
-		InputStream socketInputStream = socket.getInputStream();
-		OutputStream socketOutputStream = socket.getOutputStream();
-		int readByte;
-		while ((readByte = System.in.read()) != -1) {
-			socketOutputStream.write(readByte);
-			int socketByte = socketInputStream.read();
-			System.out.write(socketByte);
-		}
-		System.out.flush();
-	}
+            InputStream fromServer = socket.getInputStream();
+            OutputStream toServer = socket.getOutputStream();
+
+            int nextByte;
+            int incomingByte;
+
+            //read from system.in, write out to server, read from server and write that
+            while ((nextByte = System.in.read()) != -1){
+                toServer.write(nextByte);
+                incomingByte = fromServer.read();
+
+                System.out.write(incomingByte);
+            }
+
+            toServer.flush();
+            System.out.flush();
+            socket.close();
+        } catch (IOException ioe){
+            System.out.println("Shit got real");
+            System.err.println(ioe);
+        }
+    }
 }

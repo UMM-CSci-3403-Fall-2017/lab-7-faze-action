@@ -13,23 +13,54 @@ public class EchoClient {
             InputStream fromServer = socket.getInputStream();
             OutputStream toServer = socket.getOutputStream();
 
-            int nextByte;
-            int incomingByte;
+			/*
+			* Start one thread to send information to the EchoServer
+			* and another to receive information from the EchoServer
+			* This reduces the time the streams spend waiting for each other to finish reading and writing
+			*/
+			StreamThread send = new StreamThread(System.in, toServer, socket);
+			StreamThread receive = new StreamThread(fromServer, System.out, socket);
+			send.start();
+			receive.start();
 
-            //read from system.in, write out to server, read from server and write that
-            while ((nextByte = System.in.read()) != -1){
-                toServer.write(nextByte);
-                incomingByte = fromServer.read();
-
-                System.out.write(incomingByte);
-            }
-
-            toServer.flush();
-            System.out.flush();
-            socket.close();
         } catch (IOException ioe){
-            System.out.println("Shit got real");
             System.err.println(ioe);
         }
-    }
+	}
+
+    private static class StreamThread extends Thread{
+    	InputStream in;
+    	OutputStream out;
+    	Socket socket;
+
+    	// constructor for the thread
+    	public StreamThread(InputStream in, OutputStream out, Socket socket){
+    		this.in = in;
+    		this.out = out;
+    		this.socket = socket;
+		}
+
+		public void run(){
+    		try {
+    			int nextByte;
+    			// will read from given input and write to given output
+    			while ((nextByte = in.read()) != -1){
+    				out.write(nextByte);
+				}
+				out.flush();
+
+    			// if this writes to System.out, shuts down Input when it is done and closes socket
+				// otherwise this shuts down Output
+				// This has to be done from these threads to ensure things happen in the proper order
+    			if (out.equals(System.out)){
+    				socket.shutdownInput();
+    				socket.close();
+				} else {
+    				socket.shutdownOutput();
+				}
+			} catch (IOException e){
+    			System.err.println(e);
+			}
+		}
+	}
 }

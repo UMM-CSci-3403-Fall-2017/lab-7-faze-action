@@ -28,7 +28,7 @@ public class EchoClient {
         }
 	}
 
-    private static class StreamThread extends Thread{
+    public static class StreamThread extends Thread{
     	InputStream in;
     	OutputStream out;
     	Socket socket;
